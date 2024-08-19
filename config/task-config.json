@@ -14,16 +14,8 @@
                 "description": "天地图矢量地图图层（全球1~8，全国9~14，云贵川渝15~18）",
                 "name": "tdt_global_vector_layer",
                 "url": "http://t{s}.tianditu.com/DataServer?T=vec_w&tk={key}&l={z}&x={x}&y={y}",
-                "bounds": [
-                    -180,
-                    85.0511,
-                    179.999999,
-                    -85.0511
-                ],
-                "center": [
-                    0,
-                    0
-                ],
+                "bounds": [-180, 85.0511, 179.999999, -85.0511],
+                "center": [0, 0],
                 "format": "png"
             }
         },
@@ -41,23 +33,11 @@
                 "description": "天地图矢量地图图层（全球1~8，全国9~14，云贵川渝15~18）",
                 "name": "tdt_global_vector_layer",
                 "url": "http://t{s}.tianditu.com/DataServer?T=vec_w&tk={key}&l={z}&x={x}&y={y}",
-                "bounds": [
-                    72.86133,
-                    53.80065,
-                    145.81055,
-                    1.1425
-                ],
-                "center": [
-                    0,
-                    0
-                ],
+                "bounds": [72.86133, 53.80065, 145.81055, 1.1425],
+                "center": [0, 0],
                 "format": "png"
-            },
-            "currentGroupId": "9-253-423"
+            }
         }
     ],
-    "keyList": [
-        "fcd3c25f4da20c03eceb7d5f18c75a03",
-        "f1676b0574e32ee0bc8c4ac8bfa761ff"
-    ]
+    "keyList": ["fcd3c25f4da20c03eceb7d5f18c75a03", "f1676b0574e32ee0bc8c4ac8bfa761ff"]
 }

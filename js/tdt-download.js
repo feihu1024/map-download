@@ -84,7 +84,7 @@ function downloadTile(tile, option) {
     return new Promise(async (resolve, reject) => {
         let error;
         let errorType;
-        for (let i = 0; i < 1; i++) {
+        for (let i = 0; i < 3; i++) {
             try {
                 const tileExists = await mbtiles.has(level, x, y);
                 if (!tileExists) {
@@ -114,7 +114,7 @@ function downloadTile(tile, option) {
                 // console.log(`${tileId}下载失败，即将开始第${i}次重试.........`);
             }
         }
-        const errDetailMsg = `${moment().format(timeFormat)}: \n\t瓦片编号：${tileId}\n\t下载地址：${url}\n\t错误详情：${error}\n\n`;
+        const errDetailMsg = `${moment().format(timeFormat)}: \n\t瓦片编号：${tileId}\n\t下载地址：${url}\n\t错误详情：${error}\n`;
         utils.logToFile(`./logs/error-detail.log`, errDetailMsg);
         // const errMsg = `${moment().format(timeFormat)} ${tileId} ${url}\n`;
         // utils.logToFile('./logs/error.log', errMsg);
@@ -176,7 +176,7 @@ function downloadByLevel(level, range, groupTile, mbtiles, task, config) {
             // 执行下载
             const err = await downloadTileByGroup(tileList, options);
 
-            const startId = `${level}-${tileList[0].x}-${tileList[0].y}`;
+            const startId = `${level}-${tileList[0].y}-${tileList[0].x}`;
             console.log(`${moment().format(timeFormat)}: ${startId}开始共${tileList.length}个切片下载${err ? '失败' : '成功'},耗时：${Date.now() - t}ms\n`);
 
             // 如果失败，则重新下载该组切片
@@ -188,12 +188,12 @@ function downloadByLevel(level, range, groupTile, mbtiles, task, config) {
                 continue;
             }
 
-            // 更新当前任务的下载状态，同步到配置文件中
-            task.currentGroupId = startId;
-            utils.writeToFile(configPath, JSON.stringify(config, null, 4));
-
             // 当前分组下载成功后，则更新起始瓦片，以便获取下一个分组
             startTile = tileList[tileList.length - 1];
+
+            // 更新当前任务的下载状态，同步到配置文件中
+            task.currentGroupId = `${level}-${startTile.y}-${startTile.x}`;
+            utils.writeToFile(configPath, JSON.stringify(config, null, 4));
         }
     });
 }
@@ -218,7 +218,7 @@ async function startTask(task, config) {
     }
 
     // 获取当前任务的当前瓦片信息
-    const [level, x, y] = task?.currentGroupId ? task.currentGroupId.split('-') : [];
+    const [level, y, x] = task?.currentGroupId ? task.currentGroupId.split('-') : [];
     const startLevel = Number(level) || task.metadata.minzoom;
     const startTile = task?.currentGroupId ? { level: Number(level), x: Number(x), y: Number(y) } : null;
 
