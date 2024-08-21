@@ -155,15 +155,18 @@ function downloadTileByGroup(tileGroup, option) {
 /** 下载指定层级的所有地图瓦片 */
 function downloadByLevel(level, range, groupTile, mbtiles, task, config) {
     return new Promise(async (resolve, reject) => {
-        const listSize = 64;
+        const listSize = 256;
         const rowCount = range.maxX - range.minX + 1;
         const colCount = range.maxY - range.minY + 1;
         const keyList = config.keyList;
+        const tileCount = rowCount * colCount;
 
         let tileList;
         let startTile = groupTile;
         let keyIndex = 0;
         const options = { key: keyList[keyIndex], mbtiles, tileUrl: task.metadata.url };
+
+        let successCount = startTile ? (startTile.x - range.minY) * rowCount + (startTile.y - range.minX) + 1 : 0;
 
         while (true) {
             const t = Date.now();
@@ -175,9 +178,10 @@ function downloadByLevel(level, range, groupTile, mbtiles, task, config) {
 
             // 执行下载
             const err = await downloadTileByGroup(tileList, options);
+            successCount += tileList.length;
 
             const startId = `${level}-${tileList[0].y}-${tileList[0].x}`;
-            console.log(`${moment().format(timeFormat)}: ${startId}开始共${tileList.length}个切片下载${err ? '失败' : '成功'},耗时：${Date.now() - t}ms\n`);
+            console.log(`${moment().format(timeFormat)}: ${startId}开始共${tileList.length}个切片下载${err ? '失败' : '成功'},耗时：${Date.now() - t}ms (${((successCount / tileCount).toFixed(4) * 100).toFixed(2)}%: ${successCount}/${tileCount})\n`);
 
             // 如果失败，则重新下载该组切片
             if (err?.type === Tile.ERROR_KEY_LIMIT) {
@@ -220,11 +224,12 @@ async function startTask(task, config) {
     // 获取当前任务的当前瓦片信息
     const [level, y, x] = task?.currentGroupId ? task.currentGroupId.split('-') : [];
     const startLevel = Number(level) || task.metadata.minzoom;
-    const startTile = task?.currentGroupId ? { level: Number(level), x: Number(x), y: Number(y) } : null;
+    const initTile = task?.currentGroupId ? { level: Number(level), x: Number(x), y: Number(y) } : null;
 
     for (let index = startLevel; index <= task.metadata.maxzoom; index++) {
-        const tileRange = utils.bounds2Tile(bounds, index);
         const t = Date.now();
+        const tileRange = utils.bounds2Tile(bounds, index);
+        const startTile = index === startLevel ? initTile : null;
         await downloadByLevel(index, tileRange, startTile, mbtiles, task, config);
         console.log(`${moment().format(timeFormat)}: 下载完成：${index}，${JSON.stringify(tileRange)},耗时：${Date.now() - t}ms`);
     }

@@ -30,8 +30,8 @@ function test(size) {
     let config = utils.readJson(configPath);
     const task = config.taskList.find((item) => item.id === '1723002553436');
 
-    const minzoom = 1;
-    const maxzoom = 6;
+    const minzoom = 12;
+    const maxzoom = 14;
 
     const [minX, minY, maxX, maxY] = task.metadata.bounds;
     const bounds = { minX, minY, maxX, maxY };
@@ -65,3 +65,12 @@ test(12);
 
 // 全球范围：-180,85.0511,179.999999,-85.0511
 // 中国范围：72.86133,53.80065,145.81055,1.14250
+// 云贵川渝：96.76758,34.37971,110.30273,20.96144
+
+function testRate(arr) {
+    const time = Math.floor((new Date(arr[2]).getTime() - new Date(arr[0]).getTime()) / 1000);
+    const count = arr[3] - arr[1];
+    const rateStr = Math.floor(count / time) + '/s';
+    return `时长：${time}s 数量：${count} 速度：${rateStr}`;
+}
+testRate(['2024-08-21 10:37:20', 2717700, '2024-08-21 10:38:45', 2736938]);
