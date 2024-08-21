@@ -7,8 +7,6 @@ const { Metadata, Tiles } = require('./mbtiles');
 
 const timeFormat = 'YYYY-MM-DD HH:mm:ss';
 
-const configPath = './config/task-config.json';
-
 class Tile {
     static STATUS_SUCCESS = 0;
     static STATUS_EXISTS = 1;
@@ -153,7 +151,8 @@ function downloadTileByGroup(tileGroup, option) {
 }
 
 /** 下载指定层级的所有地图瓦片 */
-function downloadByLevel(level, range, groupTile, mbtiles, task, config) {
+function downloadByLevel(level, range, configOption) {
+    const { currentTile, mbtiles, task, config, configPath } = configOption;
     return new Promise(async (resolve, reject) => {
         const listSize = 256;
         const rowCount = range.maxX - range.minX + 1;
@@ -162,7 +161,7 @@ function downloadByLevel(level, range, groupTile, mbtiles, task, config) {
         const tileCount = rowCount * colCount;
 
         let tileList;
-        let startTile = groupTile;
+        let startTile = currentTile;
         let keyIndex = 0;
         const options = { key: keyList[keyIndex], mbtiles, tileUrl: task.metadata.url };
 
@@ -202,7 +201,7 @@ function downloadByLevel(level, range, groupTile, mbtiles, task, config) {
     });
 }
 
-async function startTask(task, config) {
+async function startTask(task, config, configPath) {
     const [minX, minY, maxX, maxY] = task.metadata.bounds;
     const bounds = { minX, minY, maxX, maxY };
 
@@ -224,13 +223,14 @@ async function startTask(task, config) {
     // 获取当前任务的当前瓦片信息
     const [level, y, x] = task?.currentGroupId ? task.currentGroupId.split('-') : [];
     const startLevel = Number(level) || task.metadata.minzoom;
-    const initTile = task?.currentGroupId ? { level: Number(level), x: Number(x), y: Number(y) } : null;
+    let startTile = task?.currentGroupId ? { level: Number(level), x: Number(x), y: Number(y) } : null;
+    const opt = { mbtiles, task, config, configPath };
 
     for (let index = startLevel; index <= task.metadata.maxzoom; index++) {
         const t = Date.now();
         const tileRange = utils.bounds2Tile(bounds, index);
-        const startTile = index === startLevel ? initTile : null;
-        await downloadByLevel(index, tileRange, startTile, mbtiles, task, config);
+        await downloadByLevel(index, tileRange, { currentTile: startTile, ...opt });
+        startTile = null;
         console.log(`${moment().format(timeFormat)}: 下载完成：${index}，${JSON.stringify(tileRange)},耗时：${Date.now() - t}ms`);
     }
 

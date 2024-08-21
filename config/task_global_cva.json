@@ -1,0 +1,66 @@
+{
+    "taskList": [
+        {
+            "id": "1722995453658",
+            "filePath": "./files/tdt_cva_1-18.mbtiles",
+            "title": "全球1~8级",
+            "dbInit": false,
+            "complete": false,
+            "metadata": {
+                "version": "1.1.3",
+                "type": "baselayer",
+                "minzoom": 1,
+                "maxzoom": 8,
+                "attribution": "Map data © tianditu",
+                "description": "天地图矢量注记图层（全球1~8，全国9~14，云贵川渝15~18）",
+                "name": "tdt_global_vector_cva_layer",
+                "url": "http://t{s}.tianditu.com/DataServer?T=cva_w&tk={key}&l={z}&x={x}&y={y}",
+                "bounds": [-180, 85.0511, 179.999999, -85.0511],
+                "center": [0, 0],
+                "format": "png"
+            }
+        },
+        {
+            "id": "1723002553436",
+            "filePath": "./files/tdt_cva_1-18.mbtiles",
+            "title": "全国9~14级",
+            "dbInit": true,
+            "complete": false,
+            "metadata": {
+                "version": "1.1.3",
+                "type": "baselayer",
+                "minzoom": 9,
+                "maxzoom": 14,
+                "attribution": "Map data © tianditu",
+                "description": "天地图矢量注记图层（全球1~8，全国9~14，云贵川渝15~18）",
+                "name": "tdt_global_vector_cva_layer",
+                "url": "http://t{s}.tianditu.com/DataServer?T=cva_w&tk={key}&l={z}&x={x}&y={y}",
+                "bounds": [72.86133, 53.80065, 145.81055, 1.1425],
+                "center": [0, 0],
+                "format": "png"
+            },
+            "currentGroupId": "13-5792-3855"
+        },
+        {
+            "id": "1724202471924",
+            "filePath": "./files/tdt_cva_1-18.mbtiles",
+            "title": "云贵川渝15~18级",
+            "dbInit": true,
+            "complete": false,
+            "metadata": {
+                "version": "1.1.3",
+                "type": "baselayer",
+                "minzoom": 15,
+                "maxzoom": 18,
+                "attribution": "Map data © tianditu",
+                "description": "天地图矢量注记图层（全球1~8，全国9~14，云贵川渝15~18）",
+                "name": "tdt_global_vector_cva_layer",
+                "url": "http://t{s}.tianditu.com/DataServer?T=cva_w&tk={key}&l={z}&x={x}&y={y}",
+                "bounds": [96.76758, 34.37971, 110.30273, 20.96144],
+                "center": [0, 0],
+                "format": "png"
+            }
+        }
+    ],
+    "keyList": ["fcd3c25f4da20c03eceb7d5f18c75a03", "f1676b0574e32ee0bc8c4ac8bfa761ff", "86c9e10dfe14ced9f43901b6f4c9e983", "5f080cf0caf612469667f3a96f26f7ca", "037732e0f605c2b98884616a4584d38f"]
+}

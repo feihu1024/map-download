@@ -3,7 +3,17 @@ const fs = require('fs');
 const utils = require('./js/utils');
 const tdtDownload = require('./js/tdt-download');
 
-const configPath = './config/task-config.json';
+const args = process.argv.splice(2);
+
+let configPath = args[0];
+if (!configPath) {
+    configPath = './config/' + fs.readdirSync('./config')[0];
+}
+
+if (!configPath) {
+    console.log('程序已终止：无配置文件！');
+    return;
+}
 
 // 读取配置文件
 let config = utils.readJson(configPath);
@@ -29,4 +39,4 @@ if (fs.existsSync('./logs')) {
     fs.rmSync('./logs', { recursive: true });
 }
 
-tdtDownload.startTask(task, config);
+tdtDownload.startTask(task, config, configPath);

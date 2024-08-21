@@ -17,6 +17,7 @@
             "type": "node",
             "request": "launch",
             "name": "启动程序",
+            "runtimeArgs": ["index.js","config/task_global_vec.json"],
             "skipFiles": [
                 "<node_internals>/**"
             ],
