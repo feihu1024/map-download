@@ -61,6 +61,7 @@ function getGoogleTilesByLevel(startTile, size, level, bounds) {
 function requestTile(url) {
     return axios
         .get(url, {
+            timeout: 3000,
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.0.0 Safari/537.36',
                 Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
@@ -82,13 +83,14 @@ function downloadTile(tile, option) {
     return new Promise(async (resolve, reject) => {
         let error;
         let errorType;
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 2; i++) {
             try {
                 const tileExists = await mbtiles.has(level, x, y);
                 if (!tileExists) {
                     const tileData = await requestTile(url); // 下载切片二进制数据
-                    mbtiles.save(level, x, y, tileData);
-                    return resolve({ ...tile, status: Tile.STATUS_SUCCESS });
+                    // mbtiles.save(level, x, y, tileData);
+                    // return resolve({ ...tile, status: Tile.STATUS_SUCCESS });
+                    return resolve({ ...tile, status: Tile.STATUS_SUCCESS, data: tileData });
                 } else {
                     return resolve({ ...tile, status: Tile.STATUS_EXISTS });
                 }
@@ -106,7 +108,7 @@ function downloadTile(tile, option) {
                     }
                 } else {
                     error = new Error('发生未知异常');
-                    errorType = Tile.ERROR_KEY_LIMIT;
+                    errorType = Tile.ERROR_UNKNOWN;
                 }
 
                 // console.log(`${tileId}下载失败，即将开始第${i}次重试.........`);
@@ -123,7 +125,9 @@ function downloadTile(tile, option) {
 function downloadTileByGroup(tileGroup, option) {
     return new Promise(async (resolve) => {
         let tileList = tileGroup;
+        let successList = [];
         let keyLimitErrorCount = 0;
+        const result = { fileSize: 0, successCount: 0, failCount: 0, existsCount: 0 };
         while (tileList.length > 0) {
             const pList = tileList.map((tile) => downloadTile(tile, option));
             const list = await Promise.allSettled(pList);
@@ -135,8 +139,24 @@ function downloadTileByGroup(tileGroup, option) {
                     tileList.push(tile);
                     // 记录因为tk达到上限而导致下载失败的数量
                     item.reason.type === Tile.ERROR_KEY_LIMIT && keyLimitErrorCount++;
+                    result.failCount++;
+                }
+                if (item.status === 'fulfilled' && item.value.status === Tile.STATUS_SUCCESS) {
+                    successList.push(item.value);
+                    result.successCount++;
+                    result.fileSize += item.value.data.length;
+                }
+                if (item.status === 'fulfilled' && item.value.status === Tile.STATUS_EXISTS) {
+                    result.existsCount++;
                 }
             });
+
+            // 写入数据库
+            if (successList.length > 0) {
+                await option.mbtiles.saveList(successList);
+                successList = [];
+            }
+
             // 如果所有的下载错误都是因为tk达到上限，则认为下载失败
             if (keyLimitErrorCount >= tileGroup.length) return resolve({ status: Tile.STATUS_FAIL, type: Tile.ERROR_KEY_LIMIT });
 
@@ -146,7 +166,7 @@ function downloadTileByGroup(tileGroup, option) {
                 console.log(`${moment().format(timeFormat)}: ${tileId} 有${tileList.length}个瓦片下载失败，即将开始重试.........`);
             }
         }
-        resolve();
+        resolve({ status: Tile.STATUS_SUCCESS, ...result });
     });
 }
 
@@ -176,14 +196,22 @@ function downloadByLevel(level, range, configOption) {
             if (tileList.length < 1) return resolve();
 
             // 执行下载
-            const err = await downloadTileByGroup(tileList, options);
+            const result = await downloadTileByGroup(tileList, options);
             successCount += tileList.length;
 
             const startId = `${level}-${tileList[0].y}-${tileList[0].x}`;
-            console.log(`${moment().format(timeFormat)}: ${startId}开始共${tileList.length}个切片下载${err ? '失败' : '成功'},耗时：${Date.now() - t}ms (${((successCount / tileCount).toFixed(4) * 100).toFixed(2)}%: ${successCount}/${tileCount})\n`);
+            console.log(
+                `${moment().format(timeFormat)}: ` +
+                    `${task.filePath}>>>${startId}开始共${tileList.length}个切片` +
+                    `${result.fileSize ? `(${(result.fileSize / 1024 / 1024).toFixed(2)}MB)` : ''}` +
+                    `处理完成` +
+                    `(success:${result.successCount || 0},exists:${result.existsCount || 0},fail:${result.failCount || 0}),` +
+                    `耗时：${Date.now() - t}ms ` +
+                    `(${((successCount / tileCount).toFixed(4) * 100).toFixed(2)}%: ${successCount}/${tileCount})\n`
+            );
 
             // 如果失败，则重新下载该组切片
-            if (err?.type === Tile.ERROR_KEY_LIMIT) {
+            if (result?.type === Tile.ERROR_KEY_LIMIT) {
                 options.key = keyList[++keyIndex];
                 if (keyIndex >= keyList.length) {
                     reject(new Error('tk已用完，请更换tk'));

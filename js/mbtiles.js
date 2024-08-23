@@ -11,6 +11,14 @@ const sqlRunHelper = (db, ...args) => {
     });
 };
 
+const sqlFinalizeHelper = (db) => {
+    return new Promise((resolve, reject) => {
+        db.finalize(function (err) {
+            err ? reject(err) : resolve(this);
+        });
+    });
+};
+
 class Metadata {
     static COLUMNS = [
         { name: 'version', formater: defaultFormater, getValue: defaultGetValue },
@@ -102,12 +110,14 @@ class Tiles {
     static SQL_DROP_TILES = `DROP TABLE IF EXISTS tiles;`;
     static SQL_CREATE_TILES = `CREATE TABLE tiles (zoom_level integer, tile_column integer, tile_row integer, tile_data blob);`;
     static SQL_CREATE_TILES_INDEX = `CREATE UNIQUE INDEX tile_index on tiles (zoom_level, tile_column, tile_row);`;
-    static SQL_INSERT_TILES = `INSERT INTO tiles (zoom_level, tile_row, tile_column, tile_data) VALUES (?, ?, ?, ?);`;
-    static SQL_UPDATE_TILES = `UPDATE tiles SET zoom_level = ?, tile_row = ?, tile_column = ?, tile_data = ? WHERE zoom_level = ? AND tile_row = ? AND tile_column = ?;`;
+    static SQL_INSERT_TILES = `INSERT INTO tiles (zoom_level, tile_row, tile_column, tile_data) VALUES (?, ?, ?, ?);`; // google方案需要把xy进行反转
+    static SQL_UPDATE_TILES = `UPDATE tiles SET zoom_level = ?,tile_column = ?, tile_row = ?, tile_data = ? WHERE zoom_level = ? AND tile_row = ? AND tile_column = ?;`;
     static SQL_QUERY_TILES = `SELECT zoom_level, tile_row, tile_column FROM tiles WHERE zoom_level = ? AND tile_row = ? AND tile_column = ?;`;
     db = null;
     constructor(path) {
         this.db = new sqlite3.Database(path);
+        sqlRunHelper(this.db, `PRAGMA synchronous = OFF`);
+        sqlRunHelper(this.db, `PRAGMA journal_mode = WAL;`);
     }
     async init() {
         // 删除旧表
@@ -120,7 +130,26 @@ class Tiles {
         await sqlRunHelper(this.db, Tiles.SQL_CREATE_TILES_INDEX);
     }
     async save(z, x, y, tile) {
-        await sqlRunHelper(this.db, Tiles.SQL_INSERT_TILES, [z, x, y, tile]); // google方案需要把xy进行反转
+        await sqlRunHelper(this.db, Tiles.SQL_INSERT_TILES, [z, x, y, tile]);
+    }
+    async saveList(tileList) {
+        return new Promise(async (resolve, reject) => {
+            let stmt = null;
+            try {
+                stmt = this.db.prepare(Tiles.SQL_INSERT_TILES);
+                await sqlRunHelper(this.db, 'BEGIN TRANSACTION');
+                for (const tile of tileList) {
+                    await sqlRunHelper(stmt, tile.level, tile.x, tile.y, tile.data);
+                }
+                await sqlFinalizeHelper(stmt);
+                await sqlRunHelper(this.db, 'COMMIT');
+                resolve();
+            } catch (err) {
+                await sqlRunHelper(this.db, 'ROLLBACK');
+                stmt && (await sqlFinalizeHelper(stmt));
+                reject(err);
+            }
+        });
     }
     async update(z, x, y, tile) {
         await sqlRunHelper(this.db, Tiles.SQL_UPDATE_TILES, [z, x, y, tile, z, x, y]);

@@ -92,20 +92,34 @@ const sqlQueryHelper = (db, cmd, ...args) => {
     });
 };
 
-testSql();
-
+// 全球范围
+// 1 {minX: 0, minY: 0, maxX: 1, maxY: 1} row:2: col:2 tiles:4
+// 2 {minX: 0, minY: 0, maxX: 3, maxY: 3} row:4: col:4 tiles:16
+// 3 {minX: 0, minY: 0, maxX: 7, maxY: 7} row:8: col:8 tiles:64
+// 4 {minX: 0, minY: 0, maxX: 15, maxY: 15} row:16: col:16 tiles:256
+// 5 {minX: 0, minY: 0, maxX: 31, maxY: 31} row:32: col:32 tiles:1024
+// 6 {minX: 0, minY: 0, maxX: 63, maxY: 63} row:64: col:64 tiles:4096
+// 7 {minX: 0, minY: 0, maxX: 127, maxY: 127} row:128: col:128 tiles:16384
+// 8 {minX: 0, minY: 0, maxX: 255, maxY: 255} row:256: col:256 tiles:65536
+// 全国范围
 // 9 {minX: 359, minY: 164, maxX: 463, maxY: 254} row:105: col:91 tiles:9555
 // 10 {minX: 719, minY: 329, maxX: 926, maxY: 508} row:208: col:180 tiles:37440
 // 11 {minX: 1438, minY: 659, maxX: 1853, maxY: 1017} row:416: col:359 tiles:149344
 // 12 {minX: 2877, minY: 1319, maxX: 3707, maxY: 2035} row:831: col:717 tiles:595827
 // 13 {minX: 5754, minY: 2638, maxX: 7414, maxY: 4070} row:1661: col:1433 tiles:2380213
 // 14 {minX: 11508, minY: 5276, maxX: 14828, maxY: 8140} row:3321: col:2865 tiles:9514665
+// 云贵川渝范围
+// 15 {minX: 25192, minY: 13048, maxX: 26423, maxY: 14431} row:1232: col:1384 tiles:1705088
+// 16 {minX: 50384, minY: 26096, maxX: 52847, maxY: 28863} row:2464: col:2768 tiles:6820352
+// 17 {minX: 100768, minY: 52192, maxX: 105695, maxY: 57727} row:4928: col:5536 tiles:27281408
+// 18 {minX: 201536, minY: 104384, maxX: 211391, maxY: 115455} row:9856: col:11072 tiles:109125632
 
+testSql();
 async function testSql() {
     const configPath = './config/task_global_vec.json';
-    const db = new sqlite3.Database('files/tdt_vec_1-18.mbtiles');
+    const db = new sqlite3.Database('files/tdt_vec_1-17.mbtiles');
     let config = utils.readJson(configPath);
-    const task = config.taskList.find((item) => item.id === '1723002553436');
+    const task = config.taskList.find((item) => item.id === '1724202471924');
 
     const minzoom = task.metadata.minzoom;
     const maxzoom = task.metadata.maxzoom;
@@ -125,18 +139,16 @@ async function testSql() {
             console.log(`${index}级 目标数量：${tileCount} 当前数量：${result.total} 结果一致 `);
         } else {
             console.log(`${index}级 目标数量：${tileCount} 当前数量：${result.total} 结果不一致 `);
-            let errRowCount = 0;
-            for (let row = range.minX; row <= range.maxX; row++) {
-                const rowResult = await sqlQueryHelper(db, 'get', `select count(zoom_level) as total from tiles where zoom_level=? and tile_column=?;`, [index, row]);
-                if (rowResult.total !== colCount) {
-                    console.log(`${index}级-->>${row}行 目标数量：${colCount} 当前数量：${rowResult.total} 结果不一致 `);
-                    errRowCount++;
+            let errColumnCount = 0;
+            for (let column = range.minY; column <= range.maxY; column++) {
+                const columnResult = await sqlQueryHelper(db, 'get', `select count(zoom_level) as total from tiles where zoom_level=? and tile_row=?;`, [index, column]);
+                if (columnResult.total !== rowCount) {
+                    console.log(`${index}级-->>${column}列 目标数量：${rowCount} 当前数量：${columnResult.total} 结果不一致 `);
+                    errColumnCount++;
                 }
             }
-            console.log('缺失行数：', errRowCount, '行');
+            console.log('缺失行数：', errColumnCount, '行');
+            if (errRowCount > 0) break;
         }
     }
-    // for (let i = 9; i < 15; i++) {
-    //     await sqlQueryHelper(db, 'get', `select datetime(CURRENT_TIMESTAMP,'localtime') as time, count(zoom_level) from tiles where zoom_level=?;`);
-    // }
 }
