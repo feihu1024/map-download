@@ -2,7 +2,7 @@
     "taskList": [
         {
             "id": "1722995453658",
-            "filePath": "./files/tdt_vec_1-17.mbtiles",
+            "filePath": "./files/tdt_vec_1-16.mbtiles",
             "title": "全球1~8级",
             "dbInit": true,
             "complete": true,
@@ -30,7 +30,7 @@
         },
         {
             "id": "1723002553436",
-            "filePath": "./files/tdt_vec_1-17.mbtiles",
+            "filePath": "./files/tdt_vec_1-16.mbtiles",
             "title": "全国9~14级",
             "dbInit": true,
             "complete": true,
@@ -58,17 +58,17 @@
         },
         {
             "id": "1724202471924",
-            "filePath": "./files/tdt_vec_1-17.mbtiles",
-            "title": "云贵川渝15~18级",
+            "filePath": "./files/tdt_vec_1-16.mbtiles",
+            "title": "云贵川渝15~16级",
             "dbInit": true,
             "complete": false,
             "metadata": {
                 "version": "1.1.3",
                 "type": "baselayer",
                 "minzoom": 15,
-                "maxzoom": 17,
+                "maxzoom": 16,
                 "attribution": "Map data © tianditu",
-                "description": "天地图矢量地图图层（全球1~8，全国9~14，云贵川渝15~17）",
+                "description": "天地图矢量地图图层（全球1~8，全国9~14，云贵川渝15~16）",
                 "name": "tdt_global_vector_layer",
                 "url": "http://t{s}.tianditu.com/DataServer?T=vec_w&tk={key}&l={z}&x={x}&y={y}",
                 "bounds": [
@@ -83,7 +83,7 @@
                 ],
                 "format": "png"
             },
-            "currentGroupId": "15-25735-13502"
+            "currentGroupId": "15-25271-13215"
         }
     ],
     "keyList": [
